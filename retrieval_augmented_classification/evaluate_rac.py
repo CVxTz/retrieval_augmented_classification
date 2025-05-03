@@ -63,6 +63,6 @@ if __name__ == "__main__":
 
     # Evaluation
     # Results:
-    # Accuracy: 0.9560
+    # Accuracy: 0.9640
     # 500 samples in 15 seconds => 30ms per sample throughput
     # latency around 1s

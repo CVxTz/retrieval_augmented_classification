@@ -5,6 +5,14 @@ from retrieval_augmented_classification.knn_classifier import (
     DatasetVectorStore,
 )
 from sklearn.model_selection import train_test_split
+from concurrent.futures import ThreadPoolExecutor
+from tqdm import tqdm
+
+
+def predict_single(item):
+    rac, doc = item
+    predicted_category = rac.predict(doc["text"])
+    return predicted_category, doc["category"]
 
 
 def calculate_accuracy(
@@ -54,23 +62,25 @@ if __name__ == "__main__":
     # Initialize your classifier (replace with your actual classifier instance)
     # You would need to initialize the DatasetVectorStore first and pass it
     store = DatasetVectorStore()
-    classifier = KNNClassifier(store, k=5)
+    _classifier = KNNClassifier(store, k=5)
 
     _, subsample = train_test_split(
         dev_documents, test_size=500, shuffle=False, random_state=42
     )
 
-    # Get predictions for the test documents
+    # Prepare data for multithreading
+    prediction_tasks = [(_classifier, doc) for doc in subsample]
+
     _predicted_labels = []
     _ground_truth_labels = []
 
-    print("Making predictions for dev documents...")
-    for doc in subsample:
-        predicted_category = classifier.predict(doc["text"])
-        _predicted_labels.append(predicted_category)
-        _ground_truth_labels.append(
-            doc["category"]
-        )  # Assuming first tag is the primary tag
+    print("Making predictions for dev documents using ThreadPoolExecutor...")
+    with ThreadPoolExecutor() as executor:
+        futures = [executor.submit(predict_single, task) for task in prediction_tasks]
+        for future in tqdm(futures, total=len(prediction_tasks)):
+            predicted, ground_truth = future.result()
+            _predicted_labels.append(predicted)
+            _ground_truth_labels.append(ground_truth)
 
     # Calculate and print accuracy
     evaluation_results = calculate_accuracy(_ground_truth_labels, _predicted_labels)
