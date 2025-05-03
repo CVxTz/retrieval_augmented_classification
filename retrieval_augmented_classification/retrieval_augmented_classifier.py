@@ -18,7 +18,7 @@ class PredictedCategories(BaseModel):
 
 class RAC:
     """
-    A hybrid classifier combining K-Nearest Neighbors retrieval with an LLM for multi-label prediction.
+    A hybrid classifier combining K-Nearest Neighbors retrieval with an LLM for multi-class prediction.
     Finds top K neighbors, uses top few-shot for context, and uses all neighbor categories
     as potential prediction candidates for the LLM.
     """
